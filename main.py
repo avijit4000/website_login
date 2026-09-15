@@ -234,6 +234,16 @@ async def google_login(request: Request):
 async def google_callback(request: Request, db: Annotated[Session, Depends(get_db)]) -> TokenResponse:
     if not settings.google_client_id or not settings.google_client_secret:
         raise HTTPException(status_code=503, detail="Google OAuth is not configured")
+    if request.query_params.get("error"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Google login was cancelled or denied: {request.query_params['error']}",
+        )
+    if not request.query_params.get("code"):
+        raise HTTPException(
+            status_code=400,
+            detail="This callback must be reached through /auth/google/login; open the login URL first.",
+        )
     try:
         token = await oauth.google.authorize_access_token(request)
         profile = token.get("userinfo")
