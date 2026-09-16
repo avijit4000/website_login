@@ -52,3 +52,7 @@ Before production, use long random secrets, HTTPS, a production database, migrat
 
 ## Run
 .\.venv\Scripts\python.exe .\googlelogin.py
+
+http://localhost:5000/auth
+
+http://localhost:5000

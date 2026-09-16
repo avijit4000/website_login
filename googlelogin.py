@@ -24,6 +24,7 @@ from __future__ import (
   unicode_literals,
 )
 import os
+import hmac
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -143,13 +144,28 @@ def auth(action):
         flash('Error: {}'.format(error), 'danger')
         return redirect(session['last'])
 
+    expected_state = session.pop('state', None)
+    returned_state = request.args.get('state')
+    if not expected_state or not returned_state or not hmac.compare_digest(expected_state, returned_state):
+        flash('The Google login session expired. Please try again.', 'warning')
+        return redirect(url_for('auth'))
+
     # Redirect from google with OAuth2 state
+    google = OAuth2Session(
+      app.config['GOOGLE_CLIENT_ID'],
+      redirect_uri=app.config['GOOGLE_REDIRECT_URI'],
+      state=expected_state
+    )
     token = google.fetch_token(
       'https://accounts.google.com/o/oauth2/token',
       client_secret=app.config['GOOGLE_CLIENT_SECRET'],
-      authorization_response=request.url
+      authorization_response=request.url,
+      state=expected_state
     )
     user = google.get('https://www.googleapis.com/oauth2/v1/userinfo').json()
+    print('Google login successful')
+    print('Token ID:', token.get('access_token'))
+    print('Email:', user.get('email'))
     user['token'] = token
     session['user'] = user
     flash('Logged in', 'success')
@@ -220,8 +236,8 @@ def index():
                         <dt>id</dt>
                         <dd class="p-l-1">{{ user.id }}</dd>
                         <dt>access token</dt>
-                        <dd class="p-l-1" title="{{ user.token.access_token }}">
-                          {{ user.token.access_token|truncate(16) }}</dd>
+                        <dd class="p-l-1" style="word-break: break-all;">
+                          {{ user.token.access_token }}</dd>
                         <dt>gender</dt>
                         <dd class="p-l-1">{{ user.gender }}</dd>
                         <dt>locale</dt>
