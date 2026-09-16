@@ -48,3 +48,7 @@ Start Google login at `http://localhost:8000/auth/google/login`. The callback cr
 For local development, `DEBUG=true` includes the reset token in the forgot-password response. In production, send that token through an email provider instead and keep `DEBUG=false`.
 
 Before production, use long random secrets, HTTPS, a production database, migrations, rate limiting, and an email provider for password-reset links.
+
+
+## Run
+.\.venv\Scripts\python.exe .\googlelogin.py
